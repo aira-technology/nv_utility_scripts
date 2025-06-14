@@ -1,0 +1,40 @@
+# Virtual environments
+venv/
+env/
+.venv/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+*.md
+API_DOCUMENTATION.md
+
+# Shell scripts (not needed in container)
+*.sh
+
+# Environment files
+.env
+
+# Test files
+test_*
+tests/
+

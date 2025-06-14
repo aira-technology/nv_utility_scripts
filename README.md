@@ -59,6 +59,34 @@ A collection of utility scripts for managing and scanning repositories, particul
 
 ---
 
+### 4. **REST API (app.py)** 🆕 ⭐
+**Purpose:** FastAPI-based REST API that provides the same functionality as the shell scripts via HTTP endpoints.
+
+**Usage:**
+```bash
+# Start the API server
+./start_api.sh
+
+# Access interactive documentation
+open http://localhost:8000/docs
+```
+
+**Endpoints:**
+- `GET /api/v1/health` - Health check
+- `GET /api/v1/scan/organization/{org}/tag/{tag}` - Scan organization for specific tag
+- `GET /api/v1/scan/local/tag/{tag}` - Scan local repositories
+- `GET /api/v1/scan/organization/{org}/patterns/{pattern}` - Pattern matching
+
+**Features:**
+- 🌐 RESTful HTTP API with JSON responses
+- 📚 Interactive Swagger documentation
+- ⚡ Same functionality as shell scripts
+- 🔧 Easy integration with other systems
+- 📊 Performance metrics and error handling
+- 🐳 Docker support included
+
+---
+
 ## 🚀 Prerequisites
 
 ### Required Tools
