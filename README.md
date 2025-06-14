@@ -85,6 +85,21 @@ open http://localhost:8000/docs
 - 📊 Performance metrics and error handling
 - 🐳 Docker support included
 
+**Quick Start:**
+```bash
+# Start the API server
+./start_api.sh
+
+# Test the API
+curl http://localhost:8000/api/v1/health
+
+# Scan for v0.75.5 in aira-technology
+curl http://localhost:8000/api/v1/scan/organization/aira-technology/tag/0.75.5
+
+# View interactive documentation
+open http://localhost:8000/docs
+```
+
 ---
 
 ## 🚀 Prerequisites
@@ -167,7 +182,247 @@ similar_tags=$(echo "$tags" | grep -E "(1\.0\.|v1\.0\.|your-pattern)" | head -5)
 
 ---
 
-## 🎯 Recent Success Story
+## 🔌 REST API Usage & JSON Output Format
+
+### 🚀 Getting Started with the API
+
+1. **Start the API Server:**
+   ```bash
+   ./start_api.sh
+   ```
+   
+2. **Verify API is Running:**
+   ```bash
+   curl http://localhost:8000/api/v1/health
+   ```
+
+3. **Access Interactive Documentation:**
+   - Swagger UI: http://localhost:8000/docs
+   - ReDoc: http://localhost:8000/redoc
+
+### 📊 API Endpoints & JSON Responses
+
+#### 1. Health Check
+**Endpoint:** `GET /api/v1/health`
+
+**Example Request:**
+```bash
+curl http://localhost:8000/api/v1/health
+```
+
+**JSON Response:**
+```json
+{
+  "status": "healthy",
+  "timestamp": "2025-06-14T21:16:01.000Z",
+  "github_cli_available": true,
+  "git_available": true
+}
+```
+
+#### 2. Organization Tag Scanner (Main Functionality)
+**Endpoint:** `GET /api/v1/scan/organization/{org_name}/tag/{tag_version}`
+
+**Example Request:**
+```bash
+curl http://localhost:8000/api/v1/scan/organization/aira-technology/tag/0.75.5
+```
+
+**JSON Response:**
+```json
+{
+  "total_repositories_scanned": 130,
+  "repositories_with_tag": 12,
+  "tags_found": [
+    {
+      "tag_name": "v0.75.5",
+      "commit_id": "a1b62cbae18224d0b8d7c7a737e9b19c235076f4",
+      "author": "Felipe",
+      "date": "2025-05-27T20:15:11Z",
+      "message": "fix: hard fix wrong updatedAt being passed on routine creation",
+      "repository_name": "RANGPT_api",
+      "repository_url": "https://github.com/aira-technology/RANGPT_api",
+      "tag_url": "https://github.com/aira-technology/RANGPT_api/releases/tag/v0.75.5",
+      "repository_path": null
+    },
+    {
+      "tag_name": "v0.75.5",
+      "commit_id": "d5a0daad8507d61d928fdb693ba916c83722b543",
+      "author": "Harsha-Gudipudi",
+      "date": "2025-05-30T22:52:50Z",
+      "message": "Update log_config.py (#94)",
+      "repository_name": "nv_ai_core",
+      "repository_url": "https://github.com/aira-technology/nv_ai_core",
+      "tag_url": "https://github.com/aira-technology/nv_ai_core/releases/tag/v0.75.5",
+      "repository_path": null
+    }
+  ],
+  "scan_timestamp": "2025-06-14T21:16:01.000Z",
+  "scan_duration_seconds": 45.2
+}
+```
+
+#### 3. Local Repository Scanner
+**Endpoint:** `GET /api/v1/scan/local/tag/{tag_version}`
+
+**Example Request:**
+```bash
+curl "http://localhost:8000/api/v1/scan/local/tag/0.75.5?base_path=/Users/siva/projects"
+```
+
+**JSON Response:**
+```json
+{
+  "total_repositories_scanned": 15,
+  "repositories_with_tag": 2,
+  "tags_found": [
+    {
+      "tag_name": "v0.75.5",
+      "commit_id": "abc123def456789...",
+      "author": "Developer Name",
+      "date": "2025-05-27T20:15:11Z",
+      "message": "Release v0.75.5",
+      "repository_name": "my-local-repo",
+      "repository_url": "file:///Users/siva/projects/my-local-repo",
+      "tag_url": "file:///Users/siva/projects/my-local-repo/.git/refs/tags/v0.75.5",
+      "repository_path": "/Users/siva/projects/my-local-repo"
+    }
+  ],
+  "scan_timestamp": "2025-06-14T21:16:01.000Z",
+  "scan_duration_seconds": 2.1
+}
+```
+
+#### 4. Pattern Matching Scanner
+**Endpoint:** `GET /api/v1/scan/organization/{org_name}/patterns/{version_pattern}`
+
+**Example Request:**
+```bash
+curl "http://localhost:8000/api/v1/scan/organization/aira-technology/patterns/0.75?max_results=5"
+```
+
+**JSON Response:**
+```json
+{
+  "total_repositories_scanned": 130,
+  "repositories_with_tag": 8,
+  "tags_found": [
+    {
+      "tag_name": "v0.75.0",
+      "commit_id": "def456abc789...",
+      "author": "Developer",
+      "date": "2025-05-20T10:00:00Z",
+      "message": "Release v0.75.0",
+      "repository_name": "RANGPT_api",
+      "repository_url": "https://github.com/aira-technology/RANGPT_api",
+      "tag_url": "https://github.com/aira-technology/RANGPT_api/releases/tag/v0.75.0",
+      "repository_path": null
+    },
+    {
+      "tag_name": "v0.75.1",
+      "commit_id": "ghi789jkl012...",
+      "author": "Another Developer",
+      "date": "2025-05-22T14:30:00Z",
+      "message": "Hotfix v0.75.1",
+      "repository_name": "RANGPT_api",
+      "repository_url": "https://github.com/aira-technology/RANGPT_api",
+      "tag_url": "https://github.com/aira-technology/RANGPT_api/releases/tag/v0.75.1",
+      "repository_path": null
+    }
+  ],
+  "scan_timestamp": "2025-06-14T21:16:01.000Z",
+  "scan_duration_seconds": 52.8
+}
+```
+
+### 💻 Example Usage in Python
+
+```python
+import requests
+
+# Health check
+response = requests.get("http://localhost:8000/api/v1/health")
+print(response.json())
+
+# Scan organization for specific tag
+response = requests.get(
+    "http://localhost:8000/api/v1/scan/organization/aira-technology/tag/0.75.5"
+)
+result = response.json()
+print(f"Found {result['repositories_with_tag']} repositories with tag")
+
+for tag in result['tags_found']:
+    print(f"- {tag['repository_name']}: {tag['commit_id'][:12]}...")
+```
+
+### 📋 Running the Example Script
+
+```bash
+# Run the comprehensive example
+python example_api_usage.py
+```
+
+This script demonstrates all API endpoints with pretty-printed output.
+
+### 🔧 Error Responses
+
+**GitHub CLI Not Available (500):**
+```json
+{
+  "error": "Internal Server Error",
+  "details": "GitHub CLI not available or not authenticated"
+}
+```
+
+**Repository Not Found (500):**
+```json
+{
+  "error": "Internal Server Error",
+  "details": "GitHub CLI error: repository not found"
+}
+```
+
+**Invalid Endpoint (404):**
+```json
+{
+  "error": "Not Found",
+  "details": "The requested endpoint was not found"
+}
+```
+
+### 🚀 Integration Examples
+
+**Using curl in CI/CD:**
+```bash
+#!/bin/bash
+response=$(curl -s http://api-server:8000/api/v1/scan/organization/aira-technology/tag/$TAG_VERSION)
+repo_count=$(echo $response | jq '.repositories_with_tag')
+
+if [ $repo_count -gt 0 ]; then
+  echo "Tag found in $repo_count repositories"
+  echo $response | jq '.tags_found[].repository_name'
+else
+  echo "Tag not found in any repository"
+fi
+```
+
+**Using JavaScript fetch:**
+```javascript
+fetch('http://localhost:8000/api/v1/scan/organization/aira-technology/tag/0.75.5')
+  .then(response => response.json())
+  .then(data => {
+    console.log(`Scanned ${data.total_repositories_scanned} repositories`);
+    console.log(`Found tag in ${data.repositories_with_tag} repositories`);
+    
+    data.tags_found.forEach(tag => {
+      console.log(`${tag.repository_name}: ${tag.commit_id}`);
+    });
+  });
+```
+
+---
+
+## 🍹 Recent Success Story
 
 **Challenge:** Find tag `0.75.5` in aira-technology organization  
 **Issue:** Script initially missed tags because they were prefixed with 'v'  
