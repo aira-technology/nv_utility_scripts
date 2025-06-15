@@ -1,0 +1,309 @@
+name: Update Version Data
+
+# This workflow automatically updates version tag data and commits it to a data repository
+# It can be triggered manually, on schedule, or when new releases are created
+
+on:
+  # Manual trigger
+  workflow_dispatch:
+    inputs:
+      organization:
+        description: 'GitHub organization to scan'
+        required: true
+        default: 'aira-technology'
+      tag_version:
+        description: 'Tag version to scan for'
+        required: true
+        default: '0.75.5'
+      data_repository:
+        description: 'Repository to store version data'
+        required: true
+        default: 'aira-technology/version-data'
+  
+  # Scheduled runs (every 6 hours)
+  schedule:
+    - cron: '0 */6 * * *'
+  
+  # Trigger when new releases are created in the organization
+  repository_dispatch:
+    types: [version-scan-request]
+
+env:
+  ORG_NAME: ${{ github.event.inputs.organization || 'aira-technology' }}
+  TAG_VERSION: ${{ github.event.inputs.tag_version || '0.75.5' }}
+  DATA_REPO: ${{ github.event.inputs.data_repository || 'aira-technology/version-data' }}
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  update-version-data:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 1
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y git curl jq
+        
+        # Install GitHub CLI
+        curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+        sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
+        echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+        sudo apt-get update
+        sudo apt-get install gh
+    
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Authenticate GitHub CLI
+      run: |
+        echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
+        gh auth status
+    
+    - name: Start API server
+      run: |
+        echo "Starting API server in background..."
+        python app.py &
+        API_PID=$!
+        echo "API_PID=$API_PID" >> $GITHUB_ENV
+        
+        # Wait for API to be ready
+        echo "Waiting for API to be ready..."
+        for i in {1..30}; do
+          if curl -s --max-time 5 http://localhost:8000/api/v1/health > /dev/null; then
+            echo "✅ API is ready"
+            break
+          fi
+          sleep 2
+        done
+    
+    - name: Transform and store version data
+      env:
+        GITHUB_TOKEN: ${{ secrets.VERSION_DATA_TOKEN || secrets.GITHUB_TOKEN }}
+      run: |
+        echo "🔍 Fetching version data..."
+        
+        # Create output directory
+        mkdir -p output/data output/config output/schemas
+        
+        # Run data transformer
+        python data_transformer.py \
+          --api-url http://localhost:8000 \
+          --organization "$ORG_NAME" \
+          --tag "$TAG_VERSION" \
+          --output-file output/data/version_tags.json \
+          --deployment-config config/deployment_config.json \
+          --pretty
+        
+        echo "✅ Data transformation completed"
+    
+    - name: Generate additional formats
+      run: |
+        cd output
+        
+        # Copy schema and config
+        cp ../schemas/version_tags.json schemas/ 2>/dev/null || true
+        cp ../config/deployment_config.json config/ 2>/dev/null || true
+        
+        # Generate summary and environment-specific files
+        python3 << 'EOF'
+        import json
+        import os
+        
+        # Load main data
+        with open('data/version_tags.json', 'r') as f:
+            data = json.load(f)
+        
+        # Create summary
+        summary = {
+            "last_updated": data["metadata"]["last_updated"],
+            "organization": data["metadata"]["organization"],
+            "total_tags": data["statistics"]["total_unique_tags"],
+            "total_repositories": data["statistics"]["total_repositories_with_tags"],
+            "most_common_tag": data["statistics"]["most_common_tag"],
+            "latest_tag_date": data["statistics"]["latest_tag_date"],
+            "scan_info": {
+                "scan_type": data["metadata"]["scan_type"],
+                "duration_seconds": data["metadata"]["scan_duration_seconds"],
+                "total_repositories_scanned": data["metadata"]["total_repositories_scanned"]
+            },
+            "tags_overview": {}
+        }
+        
+        # Create tags overview
+        for tag_name, tag_data in data["tags"].items():
+            summary["tags_overview"][tag_name] = {
+                "repository_count": tag_data["summary"]["total_repositories"],
+                "latest_commit_date": tag_data["summary"]["latest_commit_date"],
+                "environments": tag_data["summary"]["deployment_environments"],
+                "repositories": [repo["repository_name"] for repo in tag_data["repositories"]]
+            }
+        
+        # Save summary
+        with open('data/summary.json', 'w') as f:
+            json.dump(summary, f, indent=2)
+        
+        # Create environment-specific files
+        environments = {"production", "staging", "development", "test"}
+        
+        for env in environments:
+            env_data = {
+                "environment": env,
+                "last_updated": data["metadata"]["last_updated"],
+                "repositories": []
+            }
+            
+            for tag_name, tag_data in data["tags"].items():
+                for repo in tag_data["repositories"]:
+                    if repo.get("environment") == env and repo.get("deployment_status") == "deployed":
+                        env_data["repositories"].append({
+                            "repository_name": repo["repository_name"],
+                            "tag_name": tag_name,
+                            "commit_short": repo["commit_short"],
+                            "deployment_status": repo["deployment_status"],
+                            "repository_url": repo["repository_url"],
+                            "tag_url": repo["tag_url"],
+                            "author": repo.get("author", ""),
+                            "date": repo.get("date", "")
+                        })
+            
+            if env_data["repositories"]:
+                with open(f'data/{env}_deployments.json', 'w') as f:
+                    json.dump(env_data, f, indent=2)
+        
+        print("✅ Additional formats generated")
+        EOF
+    
+    - name: Commit and push to data repository
+      env:
+        GITHUB_TOKEN: ${{ secrets.VERSION_DATA_TOKEN || secrets.GITHUB_TOKEN }}
+      run: |
+        cd output
+        
+        # Configure git
+        git config --global user.email "action@github.com"
+        git config --global user.name "GitHub Action"
+        
+        # Initialize or clone target repository
+        if git clone https://x-access-token:$GITHUB_TOKEN@github.com/$DATA_REPO.git target-repo; then
+          cd target-repo
+          git checkout main 2>/dev/null || git checkout -b main
+        else
+          echo "Creating new repository structure..."
+          mkdir target-repo
+          cd target-repo
+          git init
+          git remote add origin https://x-access-token:$GITHUB_TOKEN@github.com/$DATA_REPO.git
+        fi
+        
+        # Copy all data files
+        cp -r ../data . 2>/dev/null || true
+        cp -r ../config . 2>/dev/null || true
+        cp -r ../schemas . 2>/dev/null || true
+        
+        # Create README
+        cat > README.md << 'EOF'
+        # Version Data Repository
+        
+        This repository contains automatically generated version tag data for UI consumption.
+        
+        ## Files
+        
+        - `data/version_tags.json` - Complete version tag data
+        - `data/summary.json` - Quick summary for UI consumption
+        - `data/*_deployments.json` - Environment-specific deployment data
+        - `schemas/version_tags.json` - JSON schema for validation
+        - `config/deployment_config.json` - Deployment configuration
+        
+        ## Last Updated
+        
+        This data was last updated automatically by the version scanner.
+        
+        ## Schema
+        
+        All data files follow the schema defined in `schemas/version_tags.json`.
+        EOF
+        
+        # Check for changes
+        if git diff --quiet && git diff --cached --quiet; then
+          echo "📝 No changes detected"
+        else
+          echo "📝 Changes detected, committing..."
+          
+          git add .
+          
+          # Create detailed commit message
+          COMMIT_MSG="🤖 Auto-update version data for $ORG_NAME
+          
+          - Tag version: $TAG_VERSION
+          - Scan timestamp: $(date -u +'%Y-%m-%dT%H:%M:%SZ')
+          - Workflow: ${{ github.workflow }}
+          - Run ID: ${{ github.run_id }}
+          
+          Files updated:
+          - data/version_tags.json
+          - data/summary.json
+          - data/*_deployments.json
+          
+          [skip ci]"
+          
+          git commit -m "$COMMIT_MSG"
+          
+          # Push changes
+          echo "🚀 Pushing to $DATA_REPO..."
+          git push origin main
+          
+          echo "✅ Successfully updated version data repository"
+        fi
+    
+    - name: Generate summary report
+      run: |
+        echo "## 📊 Version Data Update Report" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Organization:** $ORG_NAME" >> $GITHUB_STEP_SUMMARY
+        echo "**Tag Version:** $TAG_VERSION" >> $GITHUB_STEP_SUMMARY
+        echo "**Data Repository:** $DATA_REPO" >> $GITHUB_STEP_SUMMARY
+        echo "**Timestamp:** $(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [ -f output/data/version_tags.json ]; then
+          echo "### 📈 Statistics" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          TOTAL_REPOS=$(jq -r '.statistics.total_repositories_with_tags' output/data/version_tags.json)
+          TOTAL_TAGS=$(jq -r '.statistics.total_unique_tags' output/data/version_tags.json)
+          MOST_COMMON=$(jq -r '.statistics.most_common_tag' output/data/version_tags.json)
+          
+          echo "- **Repositories with tags:** $TOTAL_REPOS" >> $GITHUB_STEP_SUMMARY
+          echo "- **Unique tags found:** $TOTAL_TAGS" >> $GITHUB_STEP_SUMMARY
+          echo "- **Most common tag:** $MOST_COMMON" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "### 🏷️ Tags Found" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          jq -r '.tags | to_entries[] | "- **\(.key):** \(.value.summary.total_repositories) repositories"' output/data/version_tags.json >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "✅ **Status:** Update completed successfully" >> $GITHUB_STEP_SUMMARY
+    
+    - name: Cleanup
+      if: always()
+      run: |
+        # Kill API server
+        if [ -n "$API_PID" ]; then
+          kill $API_PID 2>/dev/null || true
+        fi
+        echo "🧹 Cleanup completed"
+

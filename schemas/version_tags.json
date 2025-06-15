@@ -1,0 +1,171 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Repository Version Tags Schema",
+  "description": "Schema for storing repository version tag information for UI consumption",
+  "type": "object",
+  "properties": {
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "last_updated": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of last scan"
+        },
+        "scan_duration_seconds": {
+          "type": "number",
+          "description": "Time taken to complete the scan"
+        },
+        "organization": {
+          "type": "string",
+          "description": "GitHub organization name"
+        },
+        "total_repositories_scanned": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total number of repositories scanned"
+        },
+        "scan_type": {
+          "type": "string",
+          "enum": ["specific_tag", "pattern_match", "local_scan"],
+          "description": "Type of scan performed"
+        },
+        "version": {
+          "type": "string",
+          "description": "Schema version for compatibility"
+        }
+      },
+      "required": ["last_updated", "organization", "scan_type", "version"]
+    },
+    "tags": {
+      "type": "object",
+      "description": "Version tags grouped by tag name",
+      "patternProperties": {
+        "^[a-zA-Z0-9._-]+$": {
+          "type": "object",
+          "properties": {
+            "tag_name": {
+              "type": "string",
+              "description": "The actual tag name (e.g., v0.75.5)"
+            },
+            "repositories": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "repository_name": {
+                    "type": "string",
+                    "description": "Name of the repository"
+                  },
+                  "commit_id": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{40}$",
+                    "description": "Full SHA commit hash"
+                  },
+                  "commit_short": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{7,12}$",
+                    "description": "Short SHA commit hash"
+                  },
+                  "author": {
+                    "type": "string",
+                    "description": "Commit author name"
+                  },
+                  "author_email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "Commit author email"
+                  },
+                  "date": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Commit date in ISO 8601 format"
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "Commit message (first line)"
+                  },
+                  "repository_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "URL to the repository"
+                  },
+                  "tag_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "URL to the specific tag/release"
+                  },
+                  "deployment_status": {
+                    "type": "string",
+                    "enum": ["deployed", "pending", "failed", "unknown"],
+                    "description": "Deployment status of this version"
+                  },
+                  "environment": {
+                    "type": "string",
+                    "enum": ["production", "staging", "development", "test"],
+                    "description": "Environment where this version is deployed"
+                  },
+                  "repository_path": {
+                    "type": ["string", "null"],
+                    "description": "Local path for local repositories"
+                  }
+                },
+                "required": ["repository_name", "commit_id", "commit_short", "date", "repository_url", "tag_url"]
+              }
+            },
+            "summary": {
+              "type": "object",
+              "properties": {
+                "total_repositories": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Number of repositories with this tag"
+                },
+                "latest_commit_date": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "Most recent commit date for this tag"
+                },
+                "deployment_environments": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": ["production", "staging", "development", "test"]
+                  },
+                  "description": "Environments where this version is deployed"
+                }
+              }
+            }
+          },
+          "required": ["tag_name", "repositories", "summary"]
+        }
+      }
+    },
+    "statistics": {
+      "type": "object",
+      "properties": {
+        "total_unique_tags": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total number of unique tags found"
+        },
+        "total_repositories_with_tags": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total repositories that have tags"
+        },
+        "most_common_tag": {
+          "type": "string",
+          "description": "Tag that appears in most repositories"
+        },
+        "latest_tag_date": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Date of the most recent tag"
+        }
+      }
+    }
+  },
+  "required": ["metadata", "tags"]
+}
+

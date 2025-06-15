@@ -1,0 +1,63 @@
+{
+  "RANGPT_api": {
+    "deployed_versions": {
+      "v0.75.5": {
+        "status": "deployed",
+        "environment": "production",
+        "deployed_at": "2025-06-10T14:30:00Z",
+        "deployment_url": "https://api.prod.aira-technology.com"
+      },
+      "v0.75.0": {
+        "status": "deployed",
+        "environment": "staging",
+        "deployed_at": "2025-06-08T10:15:00Z",
+        "deployment_url": "https://api.staging.aira-technology.com"
+      }
+    },
+    "repository_type": "backend_api",
+    "team": "backend"
+  },
+  "RANGPT-frontend": {
+    "deployed_versions": {
+      "v0.75.5": {
+        "status": "pending",
+        "environment": "staging",
+        "deployed_at": null,
+        "deployment_url": "https://app.staging.aira-technology.com"
+      },
+      "v0.75.0": {
+        "status": "deployed",
+        "environment": "production",
+        "deployed_at": "2025-06-09T16:45:00Z",
+        "deployment_url": "https://app.aira-technology.com"
+      }
+    },
+    "repository_type": "frontend",
+    "team": "frontend"
+  },
+  "nv_ai_core": {
+    "deployed_versions": {
+      "v0.75.5": {
+        "status": "deployed",
+        "environment": "staging",
+        "deployed_at": "2025-06-11T09:20:00Z",
+        "deployment_url": "https://core.staging.aira-technology.com"
+      }
+    },
+    "repository_type": "core_service",
+    "team": "ai"
+  },
+  "nv_ad_rca_microservice": {
+    "deployed_versions": {
+      "v0.75.5": {
+        "status": "deployed",
+        "environment": "production",
+        "deployed_at": "2025-06-12T11:00:00Z",
+        "deployment_url": "https://adrca.prod.aira-technology.com"
+      }
+    },
+    "repository_type": "microservice",
+    "team": "data"
+  }
+}
+

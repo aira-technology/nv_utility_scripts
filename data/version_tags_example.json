@@ -1,0 +1,95 @@
+{
+  "metadata": {
+    "last_updated": "2025-06-15T04:24:58.000Z",
+    "scan_duration_seconds": 45.2,
+    "organization": "aira-technology",
+    "total_repositories_scanned": 130,
+    "scan_type": "specific_tag",
+    "version": "1.0.0"
+  },
+  "tags": {
+    "v0.75.5": {
+      "tag_name": "v0.75.5",
+      "repositories": [
+        {
+          "repository_name": "RANGPT_api",
+          "commit_id": "a1b62cbae18224d0b8d7c7a737e9b19c235076f4",
+          "commit_short": "a1b62cb",
+          "author": "Felipe",
+          "author_email": "felipe@aira-technology.com",
+          "date": "2025-05-27T20:15:11Z",
+          "message": "fix: hard fix wrong updatedAt being passed on routine creation",
+          "repository_url": "https://github.com/aira-technology/RANGPT_api",
+          "tag_url": "https://github.com/aira-technology/RANGPT_api/releases/tag/v0.75.5",
+          "deployment_status": "deployed",
+          "environment": "production",
+          "repository_path": null
+        },
+        {
+          "repository_name": "nv_ai_core",
+          "commit_id": "d5a0daad8507d61d928fdb693ba916c83722b543",
+          "commit_short": "d5a0daa",
+          "author": "Harsha-Gudipudi",
+          "author_email": "harsha@aira-technology.com",
+          "date": "2025-05-30T22:52:50Z",
+          "message": "Update log_config.py (#94)",
+          "repository_url": "https://github.com/aira-technology/nv_ai_core",
+          "tag_url": "https://github.com/aira-technology/nv_ai_core/releases/tag/v0.75.5",
+          "deployment_status": "deployed",
+          "environment": "staging",
+          "repository_path": null
+        },
+        {
+          "repository_name": "RANGPT-frontend",
+          "commit_id": "8898c0663ed6f589855577cfc614ca4b6dcd98ea",
+          "commit_short": "8898c06",
+          "author": "Felipe",
+          "author_email": "felipe@aira-technology.com",
+          "date": "2025-05-29T01:05:04Z",
+          "message": "feat: removed pdf lib that had vulnerability, using browser default iframe for pdf",
+          "repository_url": "https://github.com/aira-technology/RANGPT-frontend",
+          "tag_url": "https://github.com/aira-technology/RANGPT-frontend/releases/tag/v0.75.5",
+          "deployment_status": "pending",
+          "environment": "staging",
+          "repository_path": null
+        }
+      ],
+      "summary": {
+        "total_repositories": 12,
+        "latest_commit_date": "2025-05-30T22:52:50Z",
+        "deployment_environments": ["production", "staging"]
+      }
+    },
+    "v0.75.0": {
+      "tag_name": "v0.75.0",
+      "repositories": [
+        {
+          "repository_name": "RANGPT_api",
+          "commit_id": "def456abc789012345678901234567890123456",
+          "commit_short": "def456a",
+          "author": "Developer",
+          "author_email": "dev@aira-technology.com",
+          "date": "2025-05-20T10:00:00Z",
+          "message": "Release v0.75.0",
+          "repository_url": "https://github.com/aira-technology/RANGPT_api",
+          "tag_url": "https://github.com/aira-technology/RANGPT_api/releases/tag/v0.75.0",
+          "deployment_status": "deployed",
+          "environment": "production",
+          "repository_path": null
+        }
+      ],
+      "summary": {
+        "total_repositories": 8,
+        "latest_commit_date": "2025-05-20T10:00:00Z",
+        "deployment_environments": ["production"]
+      }
+    }
+  },
+  "statistics": {
+    "total_unique_tags": 15,
+    "total_repositories_with_tags": 25,
+    "most_common_tag": "v0.75.5",
+    "latest_tag_date": "2025-05-30T22:52:50Z"
+  }
+}
+
