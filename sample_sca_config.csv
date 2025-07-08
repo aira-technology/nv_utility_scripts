@@ -1,0 +1,3 @@
+project_name,project_path,scan_type,include_dev_deps,workspace_id
+TestProject1,.,default,false,
+TestProject2,./veracode,quick,true,

@@ -62,6 +62,12 @@ Runs multiple Veracode scans from a configuration file.
 ### 3. `check_all_repos_status.py`
 Checks the status of all Veracode scans across repositories.
 
+### 4. `run_sca_scan.sh`
+Runs Veracode Software Composition Analysis (SCA) scans to identify open source vulnerabilities in project dependencies.
+
+### 5. `sca_bulk_scan.sh`
+Runs SCA scans for multiple projects from a configuration file with parallel execution support.
+
 ## Usage Instructions
 
 ### Running a Single Scan
@@ -127,6 +133,81 @@ Check the status of all your Veracode scans:
 - `--config` or `-c`: Path to configuration file (optional)
 - `--help`: Display help message
 
+### Running Single SCA Scan
+
+Software Composition Analysis (SCA) scans analyze your project dependencies for known vulnerabilities:
+
+```bash
+./run_sca_scan.sh -p "MyProject" -d "/path/to/project"
+```
+
+**Parameters:**
+- `-p`: Project name (required)
+- `-d`: Project directory path (required)
+- `-t`: Scan type (default, quick, deep) - default: default
+- `-f`: Output format (table, json, xml) - default: table
+- `-w`: Workspace ID (optional)
+- `-i`: Include dev dependencies (true/false) - default: false
+- `-h`: Display help message
+
+**Examples:**
+```bash
+# Basic SCA scan
+./run_sca_scan.sh -p "WebApp" -d "./my-webapp"
+
+# Deep scan with JSON output
+./run_sca_scan.sh -p "APIService" -d "./api" -t deep -f json
+
+# Include development dependencies
+./run_sca_scan.sh -p "Frontend" -d "./frontend" -i true
+```
+
+**Supported Package Managers:**
+- Node.js (package.json, package-lock.json)
+- Python (requirements.txt, Pipfile, poetry.lock)
+- Java (pom.xml, build.gradle)
+- Ruby (Gemfile, Gemfile.lock)
+- PHP (composer.json, composer.lock)
+- Go (go.mod, go.sum)
+- Rust (Cargo.toml, Cargo.lock)
+
+### Running Bulk SCA Scans
+
+For scanning multiple projects with SCA:
+
+**sca_config.csv:**
+```csv
+project_name,project_path,scan_type,include_dev_deps,workspace_id
+WebApp,/path/to/webapp,default,false,
+APIService,/path/to/api,deep,true,workspace123
+MobileApp,/path/to/mobile,quick,false,
+```
+
+```bash
+./sca_bulk_scan.sh -c sca_config.csv -l ./sca_logs -p 2
+```
+
+**Parameters:**
+- `-c`: Configuration file (required)
+- `-l`: Log directory (default: ./sca_logs)
+- `-r`: Results directory (default: ./sca_results)
+- `-t`: Default scan type (default, quick, deep)
+- `-f`: Output format (table, json, xml) - default: json
+- `-p`: Number of parallel scans (default: 1)
+- `-h`: Display help message
+
+**SCA Configuration File Format:**
+```csv
+project_name,project_path,scan_type,include_dev_deps,workspace_id
+Project1,/path/to/proj1,default,false,
+Project2,/path/to/proj2,deep,true,workspace123
+```
+
+**Notes:**
+- `scan_type`, `include_dev_deps`, and `workspace_id` are optional
+- If not specified, default values from command line will be used
+- Projects without valid directories will be skipped
+
 ## File Permissions
 
 Make sure the scripts have execute permissions:
@@ -134,6 +215,11 @@ Make sure the scripts have execute permissions:
 chmod +x run_single_scan.sh
 chmod +x veracode_bulk_scan.sh
 chmod +x check_all_repos_status.py
+chmod +x run_sca_scan.sh
+chmod +x sca_bulk_scan.sh
+
+# Or make all scripts executable at once:
+chmod +x *.sh *.py
 ```
 
 ## Troubleshooting
