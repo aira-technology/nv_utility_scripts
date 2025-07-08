@@ -1,3 +1,9 @@
 project_name,project_path,scan_type,include_dev_deps,workspace_id
-TestProject1,.,default,false,
-TestProject2,./veracode,quick,true,
+nv_ai_core,../../nv_ai_core,default,false,
+RANGPT-frontend,../../RANGPT-frontend,quick,true,
+nv_utility_scripts,../../nv_utility_scripts,deep,false,
+rapp-packaging,../../rapp-packaging,default,false,
+nv-gateway-orchestrator,../../nv-gateway-orchestrator,default,true,
+nvk-code-executor,../../nvk-code-executor,deep,false,
+RANGPT_api,../../RANGPT_api,quick,false,
+nv_shared_common,../../nv_shared_common,default,false,
